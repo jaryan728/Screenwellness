@@ -34,9 +34,11 @@ interface Props {
   cameraError?: string | null;
   user?: User | null;
   onSignOut?: () => Promise<void>;
+  authLoading?: boolean;
+  onRequestSignIn?: () => void;
 }
 
-export default function SettingsPage({ intervalMinutes, onIntervalChange, breakState, onTestOverlay, pauseLog, cameraEnabled, onCameraToggle, cameraStream, cameraError, user, onSignOut }: Props) {
+export default function SettingsPage({ intervalMinutes, onIntervalChange, breakState, onTestOverlay, pauseLog, cameraEnabled, onCameraToggle, cameraStream, cameraError, user, onSignOut, authLoading, onRequestSignIn }: Props) {
   const { continuousSeconds, nextBreakIn, isIdle } = breakState;
   const videoRef = useRef<HTMLVideoElement>(null);
   useEffect(() => {
@@ -345,6 +347,20 @@ export default function SettingsPage({ intervalMinutes, onIntervalChange, breakS
               </span>
             )}
           </div>
+        </div>
+      )}
+      {isSupabaseConfigured() && !user && !authLoading && (
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 max-w-lg mb-4">
+          <h3 className="text-sm font-semibold text-gray-800">Cloud Sync</h3>
+          <p className="text-xs text-gray-500 mt-1 mb-3">
+            Optional. Sign in to back up daily totals (screen time, points, streak). Raw app history always stays on this PC.
+          </p>
+          <button
+            onClick={onRequestSignIn}
+            className="px-4 py-1.5 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors"
+          >
+            Sign in / Sign up
+          </button>
         </div>
       )}
 

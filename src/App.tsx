@@ -21,6 +21,7 @@ function App() {
 
   const [currentPage, setCurrentPage] = useState<Page>("dashboard");
   const [showBreakOverlay, setShowBreakOverlay] = useState(false);
+  const [showAuth, setShowAuth] = useState(false);
   const [intervalMinutes, setIntervalMinutes] = useState<number>(() => {
     const saved = localStorage.getItem("screenwellness.breakInterval");
     return saved ? parseInt(saved, 10) : 20;
@@ -77,23 +78,6 @@ function App() {
     return () => clearTimeout(t);
   }, [user]);
 
-  // auth gate
-  if (authLoading && isSupabaseConfigured()) {
-    return (
-      <div className="flex h-screen w-screen items-center justify-center bg-gray-50">
-        <p className="text-sm text-gray-400">Loading…</p>
-      </div>
-    );
-  }
-
-  if (!user && isSupabaseConfigured()) {
-    return (
-      <div className="flex h-screen w-screen">
-        <AuthPage onSignIn={signIn} onSignUp={signUp} />
-      </div>
-    );
-  }
-
   return (
     <div className="flex h-screen w-screen overflow-hidden">
       <Sidebar currentPage={currentPage} onNavigate={setCurrentPage} isPaused={combinedIsPaused} pauseReason={pauseReason} cameraActive={cameraActive} />
@@ -113,8 +97,13 @@ function App() {
           cameraStream={cameraStream}
           cameraError={cameraError}
           user={user}
+          authLoading={authLoading}
           onSignOut={signOut}
+          onRequestSignIn={() => setShowAuth(true)}
         />
+      )}
+      {showAuth && !user && isSupabaseConfigured() && (
+        <AuthPage onSignIn={signIn} onSignUp={signUp} onClose={() => setShowAuth(false)} />
       )}
       {showBreakOverlay && (
         <BreakOverlay onDismiss={() => setShowBreakOverlay(false)} />
