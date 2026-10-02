@@ -46,7 +46,7 @@ export default function ReportPage({ intervalMinutes }: Props) {
       const dataUrl = await toPng(reportRef.current, { pixelRatio: 2, backgroundColor: "#f9fafb" });
       const base64 = dataUrl.replace("data:image/png;base64,", "");
       const path = await invoke<string>("save_report_to_desktop", { base64Data: base64 });
-      setSaveMsg(`Saved to Desktop: ${path.split("\\").pop()}`);
+      setSaveMsg(`Saved: ${path}`);
     } catch (e) {
       setSaveMsg(`Error: ${String(e)}`);
     } finally {

@@ -138,9 +138,22 @@ fn save_report_to_desktop(base64_data: String) -> Result<String, String> {
         .decode(&base64_data)
         .map_err(|e| e.to_string())?;
 
-    let desktop = std::env::var("USERPROFILE")
-        .map(|p| std::path::PathBuf::from(p).join("Desktop"))
-        .unwrap_or_else(|_| std::path::PathBuf::from(r"C:\Users\Public\Desktop"));
+    let mut candidates: Vec<std::path::PathBuf> = Vec::new();
+    for var in ["OneDrive", "OneDriveConsumer", "OneDriveCommercial"] {
+        if let Ok(p) = std::env::var(var) {
+            candidates.push(std::path::PathBuf::from(p).join("Desktop"));
+        }
+    }
+    if let Ok(home) = std::env::var("USERPROFILE") {
+        let home = std::path::PathBuf::from(home);
+        candidates.push(home.join("Desktop"));
+        candidates.push(home.join("Pictures"));
+        candidates.push(home);
+    }
+    let desktop = candidates
+        .into_iter()
+        .find(|p| p.is_dir())
+        .unwrap_or_else(std::env::temp_dir);
 
     let ts = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
