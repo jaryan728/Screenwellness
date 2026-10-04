@@ -11,6 +11,7 @@
     "sql:allow-select",
     "sql:allow-close",
     "notification:default",
+    "dialog:allow-save",
     "autostart:allow-enable",
     "autostart:allow-disable",
     "autostart:allow-is-enabled"

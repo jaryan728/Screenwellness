@@ -132,12 +132,7 @@ fn focus_main_window(app: tauri::AppHandle) -> Result<(), String> {
 }
 
 #[tauri::command]
-fn save_report_to_desktop(base64_data: String) -> Result<String, String> {
-    use base64::Engine;
-    let bytes = base64::engine::general_purpose::STANDARD
-        .decode(&base64_data)
-        .map_err(|e| e.to_string())?;
-
+fn default_report_dir() -> String {
     let mut candidates: Vec<std::path::PathBuf> = Vec::new();
     for var in ["OneDrive", "OneDriveConsumer", "OneDriveCommercial"] {
         if let Ok(p) = std::env::var(var) {
@@ -150,19 +145,22 @@ fn save_report_to_desktop(base64_data: String) -> Result<String, String> {
         candidates.push(home.join("Pictures"));
         candidates.push(home);
     }
-    let desktop = candidates
+    candidates
         .into_iter()
         .find(|p| p.is_dir())
-        .unwrap_or_else(std::env::temp_dir);
+        .unwrap_or_else(std::env::temp_dir)
+        .display()
+        .to_string()
+}
 
-    let ts = std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .unwrap_or_default()
-        .as_secs();
-
-    let path = desktop.join(format!("ScreenWellness_Report_{}.png", ts));
+#[tauri::command]
+fn save_report(base64_data: String, path: String) -> Result<String, String> {
+    use base64::Engine;
+    let bytes = base64::engine::general_purpose::STANDARD
+        .decode(&base64_data)
+        .map_err(|e| e.to_string())?;
     std::fs::write(&path, bytes).map_err(|e| e.to_string())?;
-    Ok(path.display().to_string())
+    Ok(path)
 }
 
 #[tauri::command]
@@ -226,6 +224,7 @@ pub fn run() {
 
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_autostart::init(tauri_plugin_autostart::MacosLauncher::LaunchAgent, None))
         .plugin(
@@ -257,7 +256,7 @@ pub fn run() {
             power_monitor::start(app.handle().clone());
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![greet, get_active_window, get_idle_seconds, send_notification, set_always_on_top, focus_main_window, save_report_to_desktop])
+        .invoke_handler(tauri::generate_handler![greet, get_active_window, get_idle_seconds, send_notification, set_always_on_top, focus_main_window, default_report_dir, save_report])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

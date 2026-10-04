@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
 import { toPng } from "html-to-image";
+import { save } from "@tauri-apps/plugin-dialog";
 import { invoke } from "@tauri-apps/api/core";
 import {
   LineChart, Line, BarChart, Bar,
@@ -45,7 +46,13 @@ export default function ReportPage({ intervalMinutes }: Props) {
     try {
       const dataUrl = await toPng(reportRef.current, { pixelRatio: 2, backgroundColor: "#f9fafb" });
       const base64 = dataUrl.replace("data:image/png;base64,", "");
-      const path = await invoke<string>("save_report_to_desktop", { base64Data: base64 });
+      const dir = await invoke<string>("default_report_dir");
+      const chosen = await save({
+        defaultPath: `${dir}\\ScreenWellness_Report_${Math.floor(Date.now() / 1000)}.png`,
+        filters: [{ name: "PNG image", extensions: ["png"] }],
+      });
+      if (!chosen) return;
+      const path = await invoke<string>("save_report", { base64Data: base64, path: chosen });
       setSaveMsg(`Saved: ${path}`);
     } catch (e) {
       setSaveMsg(`Error: ${String(e)}`);
